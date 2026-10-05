@@ -6,18 +6,16 @@
     <title>Mi Horario · Semestre VI</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff7a29'%3E%3Cpath d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM9 14H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 4H11v-2h2v2zm4 0h-2v-2h2v2z'/%3E%3C/svg%3E" />
     
+    <!-- El tema se aplica antes del primer paint para evitar el parpadeo.
+         Debe usar la misma clave 'theme' que src/App.jsx. -->
     <script>
-      (function() {
-        try {
-          var saved = localStorage.getItem('theme');
-          var theme = saved ? saved : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-          document.documentElement.setAttribute('data-theme', theme);
-          document.documentElement.style.colorScheme = theme;
-        } catch (e) {
-          document.documentElement.setAttribute('data-theme', 'dark');
-          document.documentElement.style.colorScheme = 'dark';
-        }
-      })();
+      try {
+        var saved = localStorage.getItem('theme');
+        document.documentElement.dataset.theme =
+          saved || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      } catch (e) {
+        document.documentElement.dataset.theme = 'dark';
+      }
     </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />

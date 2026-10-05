@@ -3,6 +3,7 @@
    ========================================================================== */
 
 :root {
+  color-scheme: dark;
   --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
   --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --transition-ease: cubic-bezier(0.16, 1, 0.3, 1);
@@ -21,6 +22,7 @@
 }
 
 [data-theme='light'] {
+  color-scheme: light;
   --bg-primary: #f8fafc;
   --bg-card: rgba(255, 255, 255, 0.95);
   --border-color: rgba(0, 0, 0, 0.08);
@@ -42,15 +44,12 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.5;
-  min-height: 100vh;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .sched-page {
   min-height: 100vh;
   padding: 2.25rem 1.5rem 4rem;
-  background: var(--bg-primary);
-  color: var(--text-primary);
   display: flex;
   justify-content: center;
 }
@@ -70,49 +69,47 @@ body {
   justify-content: space-between;
 }
 
-.sched-back-btn {
+.sched-back-btn,
+.sched-theme-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  box-shadow: 0 2px 6px var(--shadow-color);
+  transition: all 0.2s var(--transition-ease);
+}
+.sched-back-btn:hover,
+.sched-theme-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.sched-back-btn {
+  gap: 0.45rem;
   padding: 0.5rem 1.15rem;
   border-radius: 9999px;
-  color: var(--text-secondary);
   font-family: var(--font-display);
   font-size: 0.88rem;
   font-weight: 600;
   text-decoration: none;
-  box-shadow: 0 2px 6px var(--shadow-color);
-  transition: all 0.2s var(--transition-ease);
-}
-.sched-back-btn:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-  transform: translateX(-2px);
 }
 .sched-back-btn .material-symbols-outlined {
   font-size: 1.1rem;
 }
 
 .sched-theme-btn {
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
   border-radius: 50%;
-  color: var(--text-secondary);
   cursor: pointer;
-  box-shadow: 0 2px 6px var(--shadow-color);
-  transition: all 0.2s var(--transition-ease);
 }
 .sched-theme-btn:hover {
-  color: var(--accent);
-  border-color: var(--accent);
   transform: rotate(15deg);
+}
+.sched-back-btn:hover {
+  transform: translateX(-2px);
 }
 
 /* ── Main Schedule Card ── */
@@ -230,7 +227,6 @@ body {
   padding: 0.75rem 0.65rem;
   vertical-align: middle;
   border: 1px solid transparent;
-  cursor: default;
   transition: transform 0.2s var(--transition-ease), box-shadow 0.2s var(--transition-ease), border-color 0.2s;
   height: 64px;
 }
@@ -242,11 +238,14 @@ body {
   height: 134px;
 }
 
-.sched-class-box {
+/* Centrado compartido entre celda simple y cada mitad de un choque */
+.sched-class-box,
+.sched-dual-item {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  text-align: center;
   height: 100%;
 }
 
@@ -416,12 +415,11 @@ body {
 }
 
 /* ── Choque de horario (Clase + Tutoría en el mismo bloque) ── */
+/* Viene después de .sched-td-class, así que su padding gana sin !important. */
 .sched-td-dual {
-  padding: 3px !important;
+  padding: 3px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  height: 64px;
-  vertical-align: middle;
 }
 .sched-dual-wrapper {
   display: flex;
@@ -437,11 +435,6 @@ body {
   border-radius: 7px;
   padding: 0.25rem 0.2rem;
   border: 1px solid transparent;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
   transition: transform 0.15s ease;
 }
 .sched-dual-item:hover {
