@@ -403,6 +403,58 @@ body {
   border-color: rgba(148, 163, 184, 0.6);
 }
 
+/* 11. Tutorías (Google Calendar) */
+.sched-type-tutoria {
+  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(6, 182, 212, 0.35);
+  color: #0891b2;
+}
+[data-theme='dark'] .sched-type-tutoria {
+  background: rgba(6, 182, 212, 0.14);
+  border-color: rgba(34, 211, 238, 0.35);
+  color: #22d3ee;
+}
+
+/* ── Choque de horario (Clase + Tutoría en el mismo bloque) ── */
+.sched-td-dual {
+  padding: 3px !important;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  height: 64px;
+  vertical-align: middle;
+}
+.sched-dual-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  align-items: stretch;
+}
+.sched-dual-item {
+  flex: 1 1 50%;
+  min-width: 0;
+  border-radius: 7px;
+  padding: 0.25rem 0.2rem;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: transform 0.15s ease;
+}
+.sched-dual-item:hover {
+  transform: translateY(-1px);
+}
+.sched-dual-item .sched-class-title {
+  font-size: 0.54rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .sched-page {
