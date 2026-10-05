@@ -1,0 +1,95 @@
+{
+  "title": "Semestre VI",
+  "subtitle": "Ingeniería de Sistemas • Universidad de Antioquia",
+  "columns": ["Hora", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+  "rows": [
+    {
+      "time": "6:00 - 8:00",
+      "cells": [
+        null,
+        null,
+        { "text": "Analisis y Diseño de Sistemas II", "type": "ad" },
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "time": "8:00 - 10:00",
+      "cells": [
+        null,
+        null,
+        { "text": "Gestion Humana para Ingenieros", "type": "gh" },
+        null,
+        { "text": "Gestion Humana para Ingenieros", "type": "gh" },
+        null
+      ]
+    },
+    {
+      "time": "10:00 - 12:00",
+      "cells": [
+        { "text": "Teoria de Lenguajes y Laboratorio", "rowSpan": 2, "type": "tl" },
+        null,
+        null,
+        null,
+        null,
+        { "text": "Semillero Seviju", "type": "sev" }
+      ]
+    },
+    {
+      "time": "12:00 - 14:00",
+      "cells": [
+        "SPANNED",
+        { "text": "Analisis y Diseño de Sistemas II", "type": "ad" },
+        { "text": "Analisis y Diseño de Sistemas II", "type": "ad" },
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "time": "14:00 - 16:00",
+      "cells": [
+        { "text": "Estructuras de Datos y Laboratorio", "type": "ed" },
+        { "text": "Estructuras de Datos y Laboratorio", "type": "ed" },
+        null,
+        { "text": "Grupo de Estudio Logica y Representacion I", "type": "log" },
+        { "text": "Estructuras de Datos y Laboratorio", "type": "ed" },
+        { "text": "Comunicaciones y Laboratorio", "rowSpan": 2, "type": "com" }
+      ]
+    },
+    {
+      "time": "16:00 - 18:00",
+      "cells": [
+        null,
+        { "text": "Teoria de Lenguajes y Laboratorio", "type": "tl" },
+        null,
+        null,
+        null,
+        "SPANNED"
+      ]
+    },
+    {
+      "time": "18:00 - 20:00",
+      "cells": [
+        null,
+        null,
+        { "text": "Modelos y Simulacion de Sistemas", "type": "ms" },
+        null,
+        { "text": "Modelos y Simulacion de Sistemas", "type": "ms" },
+        null
+      ]
+    },
+    {
+      "time": "20:00 - 22:00",
+      "cells": [
+        null,
+        { "text": "Semillero Seviju", "type": "sev" },
+        { "text": "Comunicaciones y Laboratorio", "type": "com" },
+        { "text": "Weekly Fábrica", "timeNote": "15 - 30 min", "type": "fab" },
+        { "text": "Taller Coding Problems", "type": "cp" },
+        null
+      ]
+    }
+  ]
+}

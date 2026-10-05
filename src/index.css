@@ -1,0 +1,417 @@
+/* ==========================================================================
+   SCHEDULE STANDALONE DESIGN SYSTEM
+   ========================================================================== */
+
+:root {
+  --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --transition-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --accent: #ff7a29;
+  --accent-rgb: 255, 122, 41;
+
+  /* Dark theme tokens (default) */
+  --bg-primary: #090a0f;
+  --bg-card: rgba(18, 20, 29, 0.85);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --shadow-color: rgba(0, 0, 0, 0.4);
+  --shadow-hover: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme='light'] {
+  --bg-primary: #f8fafc;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --border-color: rgba(0, 0, 0, 0.08);
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --shadow-color: rgba(0, 0, 0, 0.06);
+  --shadow-hover: rgba(0, 0, 0, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.sched-page {
+  min-height: 100vh;
+  padding: 2.25rem 1.5rem 4rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  display: flex;
+  justify-content: center;
+}
+
+.sched-container {
+  width: 100%;
+  max-width: 1180px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── Top Bar ── */
+.sched-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sched-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 1.15rem;
+  border-radius: 9999px;
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 2px 6px var(--shadow-color);
+  transition: all 0.2s var(--transition-ease);
+}
+.sched-back-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: translateX(-2px);
+}
+.sched-back-btn .material-symbols-outlined {
+  font-size: 1.1rem;
+}
+
+.sched-theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  cursor: pointer;
+  box-shadow: 0 2px 6px var(--shadow-color);
+  transition: all 0.2s var(--transition-ease);
+}
+.sched-theme-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: rotate(15deg);
+}
+
+/* ── Main Schedule Card ── */
+.sched-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  box-shadow: 0 8px 30px var(--shadow-color);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sched-card-header {
+  padding: 1.5rem 2rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.04) 0%, transparent 100%);
+  text-align: center;
+}
+
+.sched-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1.15;
+}
+
+.sched-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* ── Table Wrapper & Layout ── */
+.sched-table-wrapper {
+  overflow-x: auto;
+  padding: 0.5rem;
+}
+
+.sched-table {
+  width: 100%;
+  min-width: 920px;
+  border-collapse: separate;
+  border-spacing: 6px;
+  table-layout: fixed;
+  text-align: center;
+}
+
+/* ── Header Cells ── */
+.sched-th {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 0.5rem;
+  border-radius: 10px;
+}
+.sched-th-time {
+  width: 110px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+.sched-th:not(.sched-th-time) {
+  width: calc((100% - 110px) / 6);
+}
+
+/* ── Time Column ── */
+.sched-td-time {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.6rem 0.5rem;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* ── Free / Empty Slots ── */
+.sched-td-free {
+  background: rgba(148, 163, 184, 0.04);
+  border: 1px dashed rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  vertical-align: middle;
+  height: 64px;
+  transition: background 0.15s ease;
+}
+.sched-td-free:hover {
+  background: rgba(148, 163, 184, 0.08);
+}
+.sched-free-dot {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  opacity: 0.25;
+}
+
+/* ── Class Slots Base ── */
+.sched-td-class {
+  border-radius: 10px;
+  padding: 0.75rem 0.65rem;
+  vertical-align: middle;
+  border: 1px solid transparent;
+  cursor: default;
+  transition: transform 0.2s var(--transition-ease), box-shadow 0.2s var(--transition-ease), border-color 0.2s;
+  height: 64px;
+}
+.sched-td-class:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px var(--shadow-hover);
+}
+.sched-rowspan-2 {
+  height: 134px;
+}
+
+.sched-class-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.sched-class-title {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  max-width: 100%;
+  padding: 0 2px;
+}
+
+.sched-class-timenote {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0.85;
+  margin-top: 0.25rem;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+}
+[data-theme='dark'] .sched-class-timenote {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Subject Color Variations ── */
+
+/* 1. Análisis y Diseño II (Sky / Blue) */
+.sched-type-ad {
+  background: rgba(14, 165, 233, 0.12);
+  border-color: rgba(14, 165, 233, 0.35);
+  color: #0369a1;
+}
+[data-theme='dark'] .sched-type-ad {
+  background: rgba(14, 165, 233, 0.14);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+}
+
+/* 2. Gestión Humana (Warm Amber) */
+.sched-type-gh {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #b45309;
+}
+[data-theme='dark'] .sched-type-gh {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(251, 191, 36, 0.35);
+  color: #fbbf24;
+}
+
+/* 3. Teoría de Lenguajes (Purple / Violet) */
+.sched-type-tl {
+  background: rgba(168, 85, 247, 0.13);
+  border-color: rgba(168, 85, 247, 0.35);
+  color: #7e22ce;
+}
+[data-theme='dark'] .sched-type-tl {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(192, 132, 252, 0.35);
+  color: #c084fc;
+}
+
+/* 4. Estructuras de Datos (Emerald) */
+.sched-type-ed {
+  background: rgba(16, 185, 129, 0.13);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #047857;
+}
+[data-theme='dark'] .sched-type-ed {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(52, 211, 153, 0.35);
+  color: #34d399;
+}
+
+/* 5. Modelos y Simulación (Rose / Pink) */
+.sched-type-ms {
+  background: rgba(244, 63, 94, 0.13);
+  border-color: rgba(244, 63, 94, 0.35);
+  color: #be123c;
+}
+[data-theme='dark'] .sched-type-ms {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(251, 113, 133, 0.35);
+  color: #fb7185;
+}
+
+/* 6. Semillero Seviju (Fire Orange / Tangerine) */
+.sched-type-sev {
+  background: rgba(234, 88, 12, 0.14);
+  border-color: rgba(234, 88, 12, 0.45);
+  color: #c2410c;
+}
+[data-theme='dark'] .sched-type-sev {
+  background: rgba(249, 115, 22, 0.18);
+  border-color: rgba(251, 146, 60, 0.5);
+  color: #ff7a29;
+}
+
+/* 7. Grupo de Estudio Lógica y RI (Teal) */
+.sched-type-log {
+  background: rgba(20, 184, 166, 0.13);
+  border-color: rgba(20, 184, 166, 0.35);
+  color: #0f766e;
+}
+[data-theme='dark'] .sched-type-log {
+  background: rgba(20, 184, 166, 0.15);
+  border-color: rgba(45, 212, 191, 0.35);
+  color: #2dd4bf;
+}
+
+/* 8. Taller Coding Problems (Neo Mint / Green Accent) */
+.sched-type-cp {
+  background: rgba(0, 255, 135, 0.12);
+  border-color: rgba(0, 255, 135, 0.38);
+  color: #059669;
+}
+[data-theme='dark'] .sched-type-cp {
+  background: rgba(0, 255, 135, 0.15);
+  border-color: rgba(0, 255, 135, 0.42);
+  color: #00ff87;
+}
+
+/* 9. Weekly Fábrica (Indigo) */
+.sched-type-fab {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.35);
+  color: #4f46e5;
+}
+[data-theme='dark'] .sched-type-fab {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(129, 140, 248, 0.35);
+  color: #818cf8;
+}
+
+/* 10. Comunicaciones y Laboratorio (Desactivada / Muted Gray) */
+.sched-type-com {
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px dashed rgba(148, 163, 184, 0.4);
+  color: #64748b;
+  opacity: 0.65;
+  filter: grayscale(1);
+}
+[data-theme='dark'] .sched-type-com {
+  background: rgba(148, 163, 184, 0.07);
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  color: #94a3b8;
+  opacity: 0.6;
+}
+.sched-type-com:hover {
+  opacity: 0.85;
+  border-color: rgba(148, 163, 184, 0.6);
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .sched-page {
+    padding: 1.25rem 0.85rem 3rem;
+  }
+  .sched-card-header {
+    padding: 1.25rem 1rem 1rem;
+  }
+  .sched-title {
+    font-size: 1.6rem;
+  }
+}
