@@ -1,7 +1,7 @@
 {
   "title": "Semestre VI",
   "subtitle": "Ingeniería de Sistemas • Universidad de Antioquia",
-  "columns": ["Hora", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+  "columns": ["Hora", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"],
   "rows": [
     {
       "time": "6:00 - 8:00",

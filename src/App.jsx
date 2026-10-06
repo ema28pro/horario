@@ -181,17 +181,10 @@ function armarGrilla({ indice, materias }) {
 /* ───────────────────────────── Vista ───────────────────────────── */
 
 function Contenido({ item }) {
-  const tieneLinks = item.links.length > 0
-
   return (
-    <div className={cx('sched-class-box', tieneLinks && 'sched-class-link')}>
+    <div className="sched-class-box">
       <span className="sched-class-title">{item.titulo}</span>
       {item.nota && <span className="sched-class-timenote">{item.nota}</span>}
-      {tieneLinks && (
-        <span className="material-symbols-outlined sched-link-icon" aria-hidden="true">
-          videocam
-        </span>
-      )}
     </div>
   )
 }

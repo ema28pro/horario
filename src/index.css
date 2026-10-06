@@ -7,8 +7,14 @@
   --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
   --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --transition-ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --accent: #ff7a29;
+  --accent: #ff7a29; /* Color Hover */
   --accent-rgb: 255, 122, 41;
+
+  /* Relleno neutro para hovers, chips y fondos suaves: sobre texto oscuro hace
+     falta blanco, sobre texto claro hace falta negro. Sin esta variable los
+     botones del modal se vuelven invisibles en tema claro. */
+  --fill-rgb: 255, 255, 255;
+  --chip-bg: rgba(255, 255, 255, 0.12);
 
   /* Dark theme tokens (default) */
   --bg-primary: #090a0f;
@@ -23,6 +29,8 @@
 
 [data-theme='light'] {
   color-scheme: light;
+  --fill-rgb: 15, 23, 42;
+  --chip-bg: rgba(0, 0, 0, 0.08);
   --bg-primary: #f8fafc;
   --bg-card: rgba(255, 255, 255, 0.95);
   --border-color: rgba(0, 0, 0, 0.08);
@@ -45,6 +53,7 @@ body {
   color: var(--text-primary);
   line-height: 1.5;
   transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .sched-page {
@@ -77,7 +86,12 @@ body {
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   box-shadow: 0 2px 6px var(--shadow-color);
-  transition: all 0.2s var(--transition-ease);
+  transition:
+    color 0.2s var(--transition-ease),
+    border-color 0.2s var(--transition-ease),
+    background-color 0.2s var(--transition-ease),
+    box-shadow 0.2s var(--transition-ease),
+    transform 0.2s var(--transition-ease);
 }
 .sched-back-btn:hover,
 .sched-theme-btn:hover {
@@ -97,6 +111,9 @@ body {
 .sched-back-btn .material-symbols-outlined {
   font-size: 1.1rem;
 }
+.sched-back-btn:hover {
+  transform: translateX(-2px);
+}
 
 .sched-theme-btn {
   justify-content: center;
@@ -107,9 +124,6 @@ body {
 }
 .sched-theme-btn:hover {
   transform: rotate(15deg);
-}
-.sched-back-btn:hover {
-  transform: translateX(-2px);
 }
 
 /* ── Main Schedule Card ── */
@@ -154,6 +168,8 @@ body {
 .sched-table-wrapper {
   overflow-x: auto;
   padding: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .sched-table {
@@ -227,7 +243,10 @@ body {
   padding: 0.75rem 0.65rem;
   vertical-align: middle;
   border: 1px solid transparent;
-  transition: transform 0.2s var(--transition-ease), box-shadow 0.2s var(--transition-ease), border-color 0.2s;
+  transition:
+    transform 0.2s var(--transition-ease),
+    box-shadow 0.2s var(--transition-ease),
+    border-color 0.2s var(--transition-ease);
   height: 64px;
 }
 .sched-td-class:hover {
@@ -265,122 +284,166 @@ body {
   font-weight: 700;
   opacity: 0.85;
   margin-top: 0.25rem;
-  background: rgba(0, 0, 0, 0.08);
+  background: var(--chip-bg);
   padding: 0.1rem 0.45rem;
   border-radius: 4px;
 }
-[data-theme='dark'] .sched-class-timenote {
-  background: rgba(255, 255, 255, 0.12);
-}
 
-/* ── Subject Color Variations ── */
+
+
+/* ── Subject Colors ──
+   Cada materia declara sus cinco tokens y un único bloque comparte la aplicación.
+   Añadir una materia nueva son dos reglas: la luz y la oscura. */
 
 /* 1. Análisis y Diseño II (Sky / Blue) */
 .sched-type-ad {
-  background: rgba(14, 165, 233, 0.12);
-  border-color: rgba(14, 165, 233, 0.35);
-  color: #0369a1;
+  --t-bg: 14, 165, 233;
+  --t-bd: 14, 165, 233;
+  --t-a: 0.12;
+  --t-fg: #0369a1;
 }
 [data-theme='dark'] .sched-type-ad {
-  background: rgba(14, 165, 233, 0.14);
-  border-color: rgba(56, 189, 248, 0.35);
-  color: #38bdf8;
+  --t-bd: 56, 189, 248;
+  --t-a: 0.14;
+  --t-fg: #38bdf8;
 }
 
 /* 2. Gestión Humana (Warm Amber) */
 .sched-type-gh {
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.35);
-  color: #b45309;
+  --t-bg: 245, 158, 11;
+  --t-bd: 245, 158, 11;
+  --t-a: 0.12;
+  --t-fg: #b45309;
 }
 [data-theme='dark'] .sched-type-gh {
-  background: rgba(245, 158, 11, 0.14);
-  border-color: rgba(251, 191, 36, 0.35);
-  color: #fbbf24;
+  --t-bd: 251, 191, 36;
+  --t-a: 0.14;
+  --t-fg: #fbbf24;
 }
 
 /* 3. Teoría de Lenguajes (Purple / Violet) */
 .sched-type-tl {
-  background: rgba(168, 85, 247, 0.13);
-  border-color: rgba(168, 85, 247, 0.35);
-  color: #7e22ce;
+  --t-bg: 168, 85, 247;
+  --t-bd: 168, 85, 247;
+  --t-a: 0.13;
+  --t-fg: #7e22ce;
 }
 [data-theme='dark'] .sched-type-tl {
-  background: rgba(168, 85, 247, 0.15);
-  border-color: rgba(192, 132, 252, 0.35);
-  color: #c084fc;
+  --t-bd: 192, 132, 252;
+  --t-a: 0.15;
+  --t-fg: #c084fc;
 }
 
 /* 4. Estructuras de Datos (Emerald) */
 .sched-type-ed {
-  background: rgba(16, 185, 129, 0.13);
-  border-color: rgba(16, 185, 129, 0.35);
-  color: #047857;
+  --t-bg: 16, 185, 129;
+  --t-bd: 16, 185, 129;
+  --t-a: 0.13;
+  --t-fg: #047857;
 }
 [data-theme='dark'] .sched-type-ed {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(52, 211, 153, 0.35);
-  color: #34d399;
+  --t-bd: 52, 211, 153;
+  --t-a: 0.15;
+  --t-fg: #34d399;
 }
 
 /* 5. Modelos y Simulación (Rose / Pink) */
 .sched-type-ms {
-  background: rgba(244, 63, 94, 0.13);
-  border-color: rgba(244, 63, 94, 0.35);
-  color: #be123c;
+  --t-bg: 244, 63, 94;
+  --t-bd: 244, 63, 94;
+  --t-a: 0.13;
+  --t-fg: #be123c;
 }
 [data-theme='dark'] .sched-type-ms {
-  background: rgba(244, 63, 94, 0.15);
-  border-color: rgba(251, 113, 133, 0.35);
-  color: #fb7185;
+  --t-bd: 251, 113, 133;
+  --t-a: 0.15;
+  --t-fg: #fb7185;
 }
 
 /* 6. Semillero Seviju (Fire Orange / Tangerine) */
 .sched-type-sev {
-  background: rgba(234, 88, 12, 0.14);
-  border-color: rgba(234, 88, 12, 0.45);
-  color: #c2410c;
+  --t-bg: 234, 88, 12;
+  --t-bd: 234, 88, 12;
+  --t-a: 0.14;
+  --t-ba: 0.45;
+  --t-fg: #c2410c;
 }
 [data-theme='dark'] .sched-type-sev {
-  background: rgba(249, 115, 22, 0.18);
-  border-color: rgba(251, 146, 60, 0.5);
-  color: #ff7a29;
+  --t-bg: 249, 115, 22;
+  --t-bd: 251, 146, 60;
+  --t-a: 0.18;
+  --t-ba: 0.5;
+  --t-fg: #ff7a29;
 }
 
 /* 7. Grupo de Estudio Lógica y RI (Teal) */
 .sched-type-log {
-  background: rgba(20, 184, 166, 0.13);
-  border-color: rgba(20, 184, 166, 0.35);
-  color: #0f766e;
+  --t-bg: 20, 184, 166;
+  --t-bd: 20, 184, 166;
+  --t-a: 0.13;
+  --t-fg: #0f766e;
 }
 [data-theme='dark'] .sched-type-log {
-  background: rgba(20, 184, 166, 0.15);
-  border-color: rgba(45, 212, 191, 0.35);
-  color: #2dd4bf;
+  --t-bd: 45, 212, 191;
+  --t-a: 0.15;
+  --t-fg: #2dd4bf;
 }
 
 /* 8. Taller Coding Problems (Neo Mint / Green Accent) */
 .sched-type-cp {
-  background: rgba(0, 255, 135, 0.12);
-  border-color: rgba(0, 255, 135, 0.38);
-  color: #059669;
+  --t-bg: 0, 255, 135;
+  --t-bd: 0, 255, 135;
+  --t-a: 0.12;
+  --t-ba: 0.38;
+  --t-fg: #059669;
 }
 [data-theme='dark'] .sched-type-cp {
-  background: rgba(0, 255, 135, 0.15);
-  border-color: rgba(0, 255, 135, 0.42);
-  color: #00ff87;
+  --t-bd: 0, 255, 135;
+  --t-a: 0.15;
+  --t-ba: 0.42;
+  --t-fg: #00ff87;
 }
 
 /* 9. Weekly Fábrica (Indigo) */
 .sched-type-fab {
-  background: rgba(99, 102, 241, 0.12);
-  border-color: rgba(99, 102, 241, 0.35);
-  color: #4f46e5;
+  --t-bg: 99, 102, 241;
+  --t-bd: 99, 102, 241;
+  --t-a: 0.12;
+  --t-fg: #4f46e5;
 }
 [data-theme='dark'] .sched-type-fab {
-  background: rgba(99, 102, 241, 0.15);
-  border-color: rgba(129, 140, 248, 0.35);
-  color: #818cf8;
+  --t-bd: 129, 140, 248;
+  --t-a: 0.15;
+  --t-fg: #818cf8;
+}
+
+/* 11. Tutorías (Google Calendar) */
+.sched-type-tutoria {
+  --t-bg: 6, 182, 212;
+  --t-bd: 6, 182, 212;
+  --t-a: 0.12;
+  --t-fg: #0891b2;
+}
+[data-theme='dark'] .sched-type-tutoria {
+  --t-bd: 34, 211, 238;
+  --t-a: 0.14;
+  --t-fg: #22d3ee;
+}
+
+/* Único punto donde se aplican los tokens declarados arriba. */
+.sched-type-ad,
+.sched-type-gh,
+.sched-type-tl,
+.sched-type-ed,
+.sched-type-ms,
+.sched-type-sev,
+.sched-type-log,
+.sched-type-cp,
+.sched-type-fab,
+.sched-type-tutoria {
+  background: rgba(var(--t-bg), var(--t-a, 0.12));
+  border-color: rgba(var(--t-bd), var(--t-ba, 0.35));
+  color: var(--t-fg);
 }
 
 /* 10. Comunicaciones y Laboratorio (Desactivada / Muted Gray) */
@@ -393,25 +456,13 @@ body {
 }
 [data-theme='dark'] .sched-type-com {
   background: rgba(148, 163, 184, 0.07);
-  border: 1px dashed rgba(148, 163, 184, 0.35);
+  border-color: rgba(148, 163, 184, 0.35);
   color: #94a3b8;
   opacity: 0.6;
 }
 .sched-type-com:hover {
   opacity: 0.85;
   border-color: rgba(148, 163, 184, 0.6);
-}
-
-/* 11. Tutorías (Google Calendar) */
-.sched-type-tutoria {
-  background: rgba(6, 182, 212, 0.12);
-  border-color: rgba(6, 182, 212, 0.35);
-  color: #0891b2;
-}
-[data-theme='dark'] .sched-type-tutoria {
-  background: rgba(6, 182, 212, 0.14);
-  border-color: rgba(34, 211, 238, 0.35);
-  color: #22d3ee;
 }
 
 /* ── Choque de horario (Clase + Tutoría en el mismo bloque) ── */
@@ -435,7 +486,7 @@ body {
   border-radius: 7px;
   padding: 0.25rem 0.2rem;
   border: 1px solid transparent;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s var(--transition-ease);
 }
 .sched-dual-item:hover {
   transform: translateY(-1px);
@@ -448,6 +499,176 @@ body {
   overflow-wrap: break-word;
 }
 
+/* ── Celdas con enlaces interactivos ── */
+.sched-class-clickable {
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+.sched-class-clickable:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+.sched-dual-item.sched-class-clickable:hover {
+  transform: scale(1.03);
+}
+
+/* ── Mini ventana emergente de enlaces ── */
+.sched-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.sched-popup-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 16px 40px var(--shadow-hover);
+  overflow: hidden;
+  animation: sched-pop-in 0.18s var(--transition-ease);
+}
+
+@keyframes sched-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.sched-popup-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.05) 0%, transparent 100%);
+}
+
+.sched-popup-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.sched-popup-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 8px;
+  transition: color 0.15s var(--transition-ease), background-color 0.15s var(--transition-ease);
+}
+.sched-popup-close-btn:hover {
+  color: var(--text-primary);
+  background: rgba(var(--fill-rgb), 0.08);
+}
+
+.sched-popup-body {
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.sched-popup-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sched-popup-link-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(var(--fill-rgb), 0.04);
+  border: 1px solid var(--border-color);
+  padding: 0.6rem 0.85rem;
+  border-radius: 9px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 0.18s var(--transition-ease),
+    border-color 0.18s var(--transition-ease),
+    color 0.18s var(--transition-ease),
+    transform 0.18s var(--transition-ease);
+  min-width: 0;
+}
+.sched-popup-link-btn:hover {
+  background: rgba(var(--accent-rgb), 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+.sched-popup-link-btn .material-symbols-outlined {
+  font-size: 1.15rem;
+}
+.sched-popup-link-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sched-popup-link-btn .sched-popup-arrow {
+  font-size: 0.95rem;
+  opacity: 0.6;
+}
+
+.sched-popup-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  padding: 0.6rem 0.75rem;
+  border-radius: 9px;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.18s var(--transition-ease),
+    border-color 0.18s var(--transition-ease),
+    color 0.18s var(--transition-ease);
+}
+.sched-popup-copy-btn:hover {
+  background: rgba(var(--fill-rgb), 0.08);
+  color: var(--text-primary);
+}
+.sched-popup-copy-btn.is-copied {
+  border-color: #10b981;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+.sched-popup-copy-btn .material-symbols-outlined {
+  font-size: 1rem;
+}
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .sched-page {
@@ -458,5 +679,38 @@ body {
   }
   .sched-title {
     font-size: 1.6rem;
+  }
+  .sched-table {
+    border-spacing: 4px;
+  }
+  .sched-table-wrapper {
+    padding: 0.25rem;
+  }
+  .sched-class-title {
+    font-size: 0.78rem;
+  }
+  .sched-back-btn {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.82rem;
+  }
+}
+
+/* Sin espacio para dos botones en fila: apilamos los enlaces del modal. */
+@media (max-width: 380px) {
+  .sched-popup-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ── Accesibilidad: respeta la preferencia de movimiento reducido ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
