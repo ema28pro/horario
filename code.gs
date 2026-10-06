@@ -1,59 +1,77 @@
 /**
- * Google Apps Script - Sincronizador de Tutorías de Google Calendar
- * 
- * INSTRUCCIONES DE DESPLIEGUE:
- * 1. Entra a https://script.google.com y crea un "Nuevo proyecto".
- * 2. Pega este código completo reemplazando el contenido existente.
- * 3. Haz clic en "Implementar" (Deploy) > "Nueva implementación" (New deployment).
- * 4. Selecciona tipo: "Aplicación web" (Web app).
- * 5. Configuración:
- *    - Ejecutar como: "Yo" (tu cuenta)
- *    - Quién tiene acceso: "Cualquiera" (Anyone) -> necesario para que tu web pueda leer los datos.
- * 6. Haz clic en "Implementar", autoriza los permisos y copia la URL proporcionada.
- * 7. Pega esa URL en tu aplicación Horario con el botón "Sincronizar Calendar".
+ * Horario UdeA - Google Apps Script (Aplicación web)
+ *
+ * GET .../exec[?token=CLAVE]
+ *   Sin token válido: tutorías de la semana (título y hora), sin ningún enlace.
+ *   Con token válido: además el Meet de cada tutoría y los enlaces de las materias.
+ *
+ * Requisitos:
+ *   - Servicio avanzado "Google Calendar API" agregado (Servicios > +).
+ *   - CALENDAR_ID: id de tu calendario institucional.
+ *   - Token: Configuración del proyecto > Propiedades del script > HORARIO_TOKEN.
+ *   - MATERIAS: ⚠️ borra los enlaces antes de subir este archivo a GitHub.
  */
 
-function doGet() {
+const CALENDAR_ID = '';
+const TOKEN_PROP = 'HORARIO_TOKEN';
+
+const MATERIAS = {
+  "Nombre Materia": [
+    { etiqueta: "Label", url: "Link" }
+  ]
+};
+
+function doGet(e) {
   try {
-    var tutorias = leerEventosSemanales();
-    return ContentService.createTextOutput(JSON.stringify(tutorias))
-      .setMimeType(ContentService.MimeType.JSON);
+    const token = e && e.parameter && e.parameter.token;
+    const autorizado = tokenValido(token);
+    const tutorias = leerTutorias();
+
+    return json({
+      ok: true,
+      autorizado: autorizado,
+      tutorias: autorizado
+        ? tutorias
+        : tutorias.map(t => ({ titulo: t.titulo, inicio: t.inicio, fin: t.fin })),
+      materias: autorizado ? MATERIAS : {}
+    });
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return json({ ok: false, autorizado: false, error: String(error) });
   }
 }
 
-function leerEventosSemanales() {
-  // ID del calendario institucional decodificado de tu enlace:
-  var calendarId = "";
-  var cal = CalendarApp.getCalendarById(calendarId);
+function json(datos) {
+  return ContentService
+    .createTextOutput(JSON.stringify(datos))
+    .setMimeType(ContentService.MimeType.JSON);
+}
 
-  var hoy = new Date();
+function tokenValido(candidato) {
+  const secreto = PropertiesService.getScriptProperties().getProperty(TOKEN_PROP);
+  return Boolean(secreto) && candidato === secreto;
+}
 
-  // 1. INICIO: Hoy a las 00:00:00
-  // Desaparecen los días anteriores de la semana que ya concluyeron
-  var desde = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 0, 0, 0);
+/** Tutorías que empiezan por "Tutoría"/"Tutoria", desde ahora hasta el domingo a las 23:59. */
+function leerTutorias() {
+  const ahora = new Date();
+  const diasHastaDomingo = (7 - ahora.getDay()) % 7;
+  const hasta = new Date(
+    ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + diasHastaDomingo, 23, 59, 59
+  );
 
-  // 2. FIN: Domingo de la semana actual a las 23:59:59
-  var diaSemana = hoy.getDay(); // 0 = Domingo, 1 = Lunes, etc.
-  var diasHastaFinDeSemana = diaSemana === 0 ? 0 : (7 - diaSemana);
-  var hasta = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + diasHastaFinDeSemana, 23, 59, 59, 999);
-
-  // 3. FILTRO: Comienzan con "Tutoría" o "Tutoria" (insensible a mayúsculas y tildes)
-  var regexTutoria = /^tutor[íi]a/i;
-
-  var resultado = [];
-
-  cal.getEvents(desde, hasta).forEach(function (evento) {
-    var titulo = evento.getTitle().trim();
-    if (!regexTutoria.test(titulo)) return;
-
-    resultado.push({
-      titulo: titulo,
-      inicio: evento.getStartTime().toISOString()
-    });
+  const respuesta = Calendar.Events.list(CALENDAR_ID, {
+    timeMin: ahora.toISOString(),
+    timeMax: hasta.toISOString(),
+    singleEvents: true,
+    orderBy: 'startTime'
   });
 
-  return resultado;
+  return (respuesta.items || [])
+    .filter(ev => ev.start.dateTime && /^tutor[íi]a/i.test((ev.summary || '').trim()))
+    .map(ev => ({
+      titulo: ev.summary.trim(),
+      inicio: ev.start.dateTime,
+      fin: ev.end.dateTime,
+      link: ev.hangoutLink || null
+    }));
 }
