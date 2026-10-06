@@ -174,7 +174,7 @@ body {
 
 .sched-table {
   width: 100%;
-  min-width: 920px;
+  min-width: 1020px;
   border-collapse: separate;
   border-spacing: 6px;
   table-layout: fixed;
@@ -194,12 +194,13 @@ body {
   border-radius: 10px;
 }
 .sched-th-time {
-  width: 110px;
+  width: 105px;
   color: var(--text-muted);
   font-size: 0.8rem;
 }
 .sched-th:not(.sched-th-time) {
-  width: calc((100% - 110px) / 6);
+  width: calc((100% - 105px) / 7);
+  min-width: 125px;
 }
 
 /* ── Time Column ── */
@@ -270,12 +271,14 @@ body {
 
 .sched-class-title {
   font-family: var(--font-body);
-  font-size: 0.85rem;
+  font-size: 0.83rem;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.32;
   letter-spacing: -0.01em;
   max-width: 100%;
   padding: 0 2px;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .sched-class-timenote {
@@ -682,12 +685,32 @@ body {
   }
   .sched-table {
     border-spacing: 4px;
+    min-width: 980px;
   }
   .sched-table-wrapper {
     padding: 0.25rem;
   }
+  .sched-th {
+    font-size: 0.8rem;
+    padding: 0.6rem 0.35rem;
+  }
+  .sched-th-time {
+    width: 85px;
+    font-size: 0.72rem;
+  }
+  .sched-th:not(.sched-th-time) {
+    min-width: 120px;
+  }
+  .sched-td-time {
+    font-size: 0.74rem;
+    padding: 0.5rem 0.3rem;
+  }
+  .sched-td-class {
+    padding: 0.5rem 0.35rem;
+  }
   .sched-class-title {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
+    line-height: 1.22;
   }
   .sched-back-btn {
     padding: 0.5rem 0.9rem;
