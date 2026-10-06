@@ -1,24 +1,29 @@
-import { memo, useEffect, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import scheduleData from './data/schedule.json'
 
 const CALENDAR_URL = import.meta.env.VITE_CALENDAR_URL
 const THEME_KEY = 'theme'
 const TOKEN_KEY = 'horario_token'
+// El enlace de acceso usa ?t=... (corto, para copiar y pegar); al Apps Script
+// se le manda ?token=..., que es el nombre que el script sabe leer.
+const PARAM_ENTRADA = 't'
+const PARAM_API = 'token'
 const SPANNED = 'SPANNED'
-const ES_TUTORIA = /^tutor[íi]a/i
 
 const { columns, rows, subtitle, title } = scheduleData
 
-// Hora inicial de cada fila (los bloques son de 2 h), precalculada para no
-// reparsear `row.time` en cada celda.
+// Columnas de días (todas menos "Hora"). Las filas del JSON que tengan menos
+// celdas que días (p. ej. sin la del domingo) se completan con celdas libres.
+const DIAS = columns.length - 1
+
+// Hora inicial de cada fila (los bloques son de 2 h).
 const HORAS = rows.map(({ time }) => Number(time.split(':')[0]))
+
+const SIN_DATOS = { indice: new Map(), materias: {} }
 
 const cx = (...clases) => clases.filter(Boolean).join(' ')
 
-/**
- * localStorage envuelto en try/catch: en modo privado puede lanzar, y en ese caso
- * el token vive solo en la memoria de la pestaña (sigue funcionando).
- */
+/** localStorage sin romper en modo privado: allí el valor solo vive en memoria. */
 const almacen = {
   get(clave) {
     try {
@@ -31,24 +36,12 @@ const almacen = {
     try {
       localStorage.setItem(clave, valor)
     } catch {
-      /* modo privado: el token queda solo en memoria */
+      /* modo privado */
     }
   },
 }
 
-/** Rango [hoy 00:00:00, domingo 23:59:59] de la semana en curso, en ms. */
-function rangoSemanaActual() {
-  const hoy = new Date()
-  const [anio, mes, dia] = [hoy.getFullYear(), hoy.getMonth(), hoy.getDate()]
-  const hastaDomingo = hoy.getDay() === 0 ? 0 : 7 - hoy.getDay()
-
-  return [
-    Date.now(),
-    new Date(anio, mes, dia + hastaDomingo, 23, 59, 59, 999).getTime(),
-  ]
-}
-
-/** Normaliza el nombre de una materia para emparejarlo con el diccionario privado. */
+/** Normaliza el nombre de una materia para emparejarlo con el diccionario del servidor. */
 function claveMateria(texto) {
   return (texto ?? '')
     .toLowerCase()
@@ -58,119 +51,73 @@ function claveMateria(texto) {
     .trim()
 }
 
-/** Monta la URL del Apps Script firmando la petición con el token privado. */
-function urlConToken(token) {
-  if (!CALENDAR_URL) return null
-
-  try {
-    const url = new URL(CALENDAR_URL)
-    if (token) url.searchParams.set('token', token)
-    return url.toString()
-  } catch {
-    // URL relativa o mal formada: se usa tal cual.
-    return token ? `${CALENDAR_URL}${CALENDAR_URL.includes('?') ? '&' : '?'}token=${token}` : CALENDAR_URL
-  }
-}
+/* ───────────────────────────── Datos ───────────────────────────── */
 
 /**
- * Toma el token de `?token=...` la primera vez, lo guarda y borra el parámetro de
- * la barra de direcciones para que no quede en el historial ni en un pantallazo.
- * En las siguientes visitas se recupera del almacenamiento local del navegador.
+ * Toma el token de `?t=...` la primera vez, lo guarda y borra el parámetro de la
+ * barra de direcciones. En las siguientes visitas lo recupera del navegador.
  */
+function leerToken() {
+  const url = new URL(window.location.href)
+  const deUrl = url.searchParams.get(PARAM_ENTRADA)?.trim()
+
+  if (deUrl) {
+    almacen.set(TOKEN_KEY, deUrl)
+    url.searchParams.delete(PARAM_ENTRADA)
+    window.history.replaceState({}, '', url)
+    return deUrl
+  }
+
+  return almacen.get(TOKEN_KEY) ?? ''
+}
+
 function useTokenPrivado() {
-  const [token] = useState(() => {
-    try {
-      const deUrl = new URLSearchParams(window.location.search).get('token')
-      if (deUrl) {
-        const token = deUrl.trim()
-        almacen.set(TOKEN_KEY, token)
-
-        const url = new URL(window.location.href)
-        url.searchParams.delete('token')
-        window.history.replaceState({}, '', url)
-
-        return token
-      }
-    } catch {
-      /* URL no manipulable: se sigue con el token guardado */
-    }
-
-    return almacen.get(TOKEN_KEY) ?? ''
-  })
-
+  const [token] = useState(leerToken)
   return token
 }
 
-function normalizarEnlaces(valor) {
-  if (!valor) return []
-  if (typeof valor === 'string') return [{ etiqueta: 'Enlace', url: valor }]
-  if (Array.isArray(valor)) {
-    return valor
-      .map(v => (typeof v === 'string' ? { etiqueta: 'Enlace', url: v } : v))
-      .filter(v => v && typeof v.url === 'string' && v.url)
-  }
-  if (typeof valor === 'object' && valor.url) return [valor]
-  return []
-}
-
 /**
- * Descarga las tutorías de Google Calendar una sola vez y las indexa por
- * `columna:hora` (0 = Lunes ... 6 = Sábado), así cada celda resuelve su
- * bloque con una consulta al Map en vez de recorrer todos los eventos.
- * Además guarda el diccionario de materias fijas que el servidor solo envía si el
- * token es válido. Para un visitante sin token, `indice` queda con títulos y el
- * diccionario vacío: ninguna celda se vuelve clicable.
+ * Descarga las tutorías una sola vez y las indexa por `día:hora`
+ * (0 = lunes ... 6 = domingo). El servidor ya filtra lo que no corresponde y solo
+ * manda enlaces y materias si el token es válido.
  */
 function useDatosCalendar(token) {
-  const [datos, setDatos] = useState(() => ({ indice: new Map(), materias: {} }))
+  const [datos, setDatos] = useState(SIN_DATOS)
 
   useEffect(() => {
-    const url = urlConToken(token)
-    if (!url) {
-      console.log('[horario] VITE_CALENDAR_URL no está configurado.')
-      return
-    }
+    if (!CALENDAR_URL) return
+
+    const url = new URL(CALENDAR_URL)
+    if (token) url.searchParams.set(PARAM_API, token)
 
     const controller = new AbortController()
 
     fetch(url, { signal: controller.signal })
       .then(res => res.json())
       .then(data => {
-        // El script de Google devuelve { error } si algo falla.
-        if (!data || !Array.isArray(data.tutorias)) return
+        if (!Array.isArray(data.tutorias)) return
 
-        const [ahoraMs, hasta] = rangoSemanaActual()
         const indice = new Map()
-        const materias = {}
-
-        for (const [nombre, raw] of Object.entries(data.materias ?? {})) {
-          const links = normalizarEnlaces(raw)
-          if (links.length > 0) materias[claveMateria(nombre)] = links
-        }
-
         for (const ev of data.tutorias) {
-          if (!ES_TUTORIA.test((ev.titulo ?? '').trim())) continue
-
           const inicio = new Date(ev.inicio)
-          const inicioMs = inicio.getTime()
-          if (Number.isNaN(inicioMs) || inicioMs > hasta) continue
+          const dia = (inicio.getDay() + 6) % 7 // getDay(): 0 = domingo → lo pasamos a 0 = lunes
+          const clave = `${dia}:${inicio.getHours()}`
 
-          // Duración de la clase (usa ev.fin o asume bloque de 2 horas)
-          const finMs = ev.fin ? new Date(ev.fin).getTime() : inicioMs + 2 * 60 * 60 * 1000
-
-          // Si el evento ya terminó respecto a la hora actual, desaparece de inmediato
-          if (finMs <= ahoraMs) continue
-
-          const links = ev.link ? [{ etiqueta: 'Google Meet', url: ev.link }] : []
-          const clave = `${inicio.getDay() - 1}:${inicio.getHours()}`
-          if (!indice.has(clave)) indice.set(clave, { ...ev, links })
+          if (!indice.has(clave)) {
+            indice.set(clave, {
+              titulo: ev.titulo,
+              links: ev.link ? [{ etiqueta: 'Google Meet', url: ev.link }] : [],
+            })
+          }
         }
+
+        const materias = Object.fromEntries(
+          Object.entries(data.materias ?? {}).map(([nombre, links]) => [claveMateria(nombre), links])
+        )
 
         setDatos({ indice, materias })
       })
-      .catch(() => {
-        // Silenciar para no ensuciar la consola si la URL no responde o falla
-      })
+      .catch(() => {})
 
     return () => controller.abort()
   }, [token])
@@ -178,18 +125,68 @@ function useDatosCalendar(token) {
   return datos
 }
 
+/* ───────────────────────────── Grilla ───────────────────────────── */
+
 /** Tutoría que cae en el bloque `hora`..`hora + 2`. */
-function tutoriaEn(indice, hora, col) {
-  return indice.get(`${col}:${hora}`) ?? indice.get(`${col}:${hora + 1}`) ?? null
+function tutoriaEn(indice, hora, dia) {
+  return indice.get(`${dia}:${hora}`) ?? indice.get(`${dia}:${hora + 1}`) ?? null
 }
 
-function Contenido({ materia, titulo, links }) {
-  const tieneLinks = Array.isArray(links) && links.length > 0
+/** Materia de la fila `f`; si la celda es la mitad de abajo de un bloque, la de la fila de arriba. */
+function materiaEn(f, dia) {
+  const celda = rows[f]?.cells[dia]
+  return celda === SPANNED ? rows[f - 1]?.cells[dia] ?? null : celda ?? null
+}
+
+/**
+ * Cruza el horario fijo con las tutorías y devuelve, por fila y día:
+ *   null                    → celda cubierta por el rowSpan de la de arriba
+ *   { items, rowSpan }      → items = [materia?, tutoría?]; vacío = hora libre
+ * Un bloque de 2 h solo se mantiene unido si ninguna de sus dos filas tiene tutoría.
+ */
+function armarGrilla({ indice, materias }) {
+  return rows.map((fila, f) =>
+    Array.from({ length: DIAS }, (_, dia) => {
+      const inicio = fila.cells[dia] === SPANNED ? f - 1 : f
+      const esBloque =
+        rows[inicio]?.cells[dia]?.rowSpan === 2 && rows[inicio + 1]?.cells[dia] === SPANNED
+      const unido =
+        esBloque &&
+        !tutoriaEn(indice, HORAS[inicio], dia) &&
+        !tutoriaEn(indice, HORAS[inicio + 1], dia)
+
+      if (unido && f !== inicio) return null
+
+      const items = []
+      const materia = materiaEn(f, dia)
+      const tutoria = tutoriaEn(indice, HORAS[f], dia)
+
+      if (materia) {
+        items.push({
+          titulo: materia.text,
+          nota: materia.timeNote,
+          tipo: `sched-type-${materia.type}`,
+          links: materias[claveMateria(materia.text)] ?? [],
+        })
+      }
+      if (tutoria) {
+        items.push({ titulo: tutoria.titulo, tipo: 'sched-type-tutoria', links: tutoria.links })
+      }
+
+      return { items, rowSpan: unido ? 2 : 1 }
+    })
+  )
+}
+
+/* ───────────────────────────── Vista ───────────────────────────── */
+
+function Contenido({ item }) {
+  const tieneLinks = item.links.length > 0
 
   return (
     <div className={cx('sched-class-box', tieneLinks && 'sched-class-link')}>
-      <span className="sched-class-title">{titulo ?? materia?.text}</span>
-      {materia?.timeNote && <span className="sched-class-timenote">{materia.timeNote}</span>}
+      <span className="sched-class-title">{item.titulo}</span>
+      {item.nota && <span className="sched-class-timenote">{item.nota}</span>}
       {tieneLinks && (
         <span className="material-symbols-outlined sched-link-icon" aria-hidden="true">
           videocam
@@ -199,11 +196,10 @@ function Contenido({ materia, titulo, links }) {
   )
 }
 
-/** Resuelve los 3 estados de una celda: libre, materia sola o choque materia + tutoría. */
-function Celda({ materia, tutoria, linksMateria, rowSpan = 1, onAbrirEnlaces }) {
-  const alto = rowSpan > 1 ? 'sched-rowspan-2' : null
+function Celda({ celda, onAbrirEnlaces }) {
+  const { items, rowSpan } = celda
 
-  if (!materia && !tutoria) {
+  if (items.length === 0) {
     return (
       <td className="sched-td-free">
         <span className="sched-free-dot" />
@@ -211,101 +207,48 @@ function Celda({ materia, tutoria, linksMateria, rowSpan = 1, onAbrirEnlaces }) 
     )
   }
 
-  const tipo = materia ? `sched-type-${materia.type}` : 'sched-type-tutoria'
-  const linksTutoria = tutoria?.links ?? []
+  const alto = rowSpan > 1 && 'sched-rowspan-2'
+  const clic = item =>
+    item.links.length > 0
+      ? { onClick: () => onAbrirEnlaces({ titulo: item.titulo, links: item.links }), title: 'Ver enlaces' }
+      : {}
 
-  if (materia && tutoria) {
-    const tieneLinksMat = Array.isArray(linksMateria) && linksMateria.length > 0
-    const tieneLinksTut = linksTutoria.length > 0
-
+  // Materia y tutoría a la vez: celda partida en dos.
+  if (items.length > 1) {
     return (
       <td className={cx('sched-td-class', 'sched-td-dual', alto)} rowSpan={rowSpan}>
         <div className="sched-dual-wrapper">
-          <div
-            className={cx('sched-dual-item', tipo, tieneLinksMat && 'sched-class-clickable')}
-            onClick={tieneLinksMat ? () => onAbrirEnlaces({ titulo: materia.text, links: linksMateria }) : undefined}
-            title={tieneLinksMat ? 'Ver enlaces' : undefined}
-          >
-            <Contenido materia={materia} links={linksMateria} />
-          </div>
-          <div
-            className={cx('sched-dual-item', 'sched-type-tutoria', tieneLinksTut && 'sched-class-clickable')}
-            onClick={tieneLinksTut ? () => onAbrirEnlaces({ titulo: tutoria.titulo, links: linksTutoria }) : undefined}
-            title={tieneLinksTut ? 'Ver enlaces' : undefined}
-          >
-            <Contenido titulo={tutoria.titulo} links={linksTutoria} />
-          </div>
+          {items.map((item, i) => (
+            <div
+              key={i}
+              className={cx('sched-dual-item', item.tipo, item.links.length > 0 && 'sched-class-clickable')}
+              {...clic(item)}
+            >
+              <Contenido item={item} />
+            </div>
+          ))}
         </div>
       </td>
     )
   }
 
-  const links = linksMateria ?? linksTutoria
-  const tieneLinks = Array.isArray(links) && links.length > 0
-  const tituloCelda = materia?.text ?? tutoria?.titulo
+  const [item] = items
 
   return (
     <td
-      className={cx('sched-td-class', alto, tipo, tieneLinks && 'sched-class-clickable')}
+      className={cx('sched-td-class', alto, item.tipo, item.links.length > 0 && 'sched-class-clickable')}
       rowSpan={rowSpan}
-      onClick={tieneLinks ? () => onAbrirEnlaces({ titulo: tituloCelda, links }) : undefined}
-      title={tieneLinks ? 'Ver enlaces de la clase' : undefined}
+      {...clic(item)}
     >
-      <Contenido materia={materia} titulo={tutoria?.titulo} links={links} />
+      <Contenido item={item} />
     </td>
   )
 }
 
-function celdaDe(celda, col, filaIdx, datos, onAbrirEnlaces) {
-  const { indice, materias } = datos
-  const hora = HORAS[filaIdx]
-
-  // Mitad inferior de un bloque con rowSpan: 2 (marcada como 'SPANNED').
-  if (celda === SPANNED) {
-    const previa = rows[filaIdx - 1]?.cells[col]
-    if (previa?.rowSpan !== 2) return null
-
-    const tutoriaBloquePrevio = tutoriaEn(indice, HORAS[filaIdx - 1], col)
-    const tutoriaBloqueActual = tutoriaEn(indice, hora, col)
-
-    // Sin tutoría en ninguno de los dos bloques, el rowspan original sigue igual.
-    if (!tutoriaBloquePrevio && !tutoriaBloqueActual) return null
-
-    return (
-      <Celda
-        key={col}
-        materia={previa}
-        tutoria={tutoriaBloqueActual}
-        linksMateria={materias[claveMateria(previa?.text)]}
-        onAbrirEnlaces={onAbrirEnlaces}
-      />
-    )
-  }
-
-  const tutoria = tutoriaEn(indice, hora, col)
-  if (!celda) return <Celda key={col} tutoria={tutoria} onAbrirEnlaces={onAbrirEnlaces} />
-
-  const filaSiguiente = rows[filaIdx + 1]
-  const continuaAbajo = celda.rowSpan === 2 && filaSiguiente?.cells[col] === SPANNED
-  const tutoriaAbajo = continuaAbajo ? tutoriaEn(indice, HORAS[filaIdx + 1], col) : null
-
-  // Si la tutoría ocupa cualquiera de los dos bloques hay que desdoblar el rowspan.
-  const rowSpan = continuaAbajo && (tutoria || tutoriaAbajo) ? 1 : celda.rowSpan || 1
-
-  return (
-    <Celda
-      key={col}
-      materia={celda}
-      tutoria={tutoria}
-      linksMateria={materias[claveMateria(celda.text)]}
-      rowSpan={rowSpan}
-      onAbrirEnlaces={onAbrirEnlaces}
-    />
-  )
-}
-
-// memo + `datos` estable: cambiar el tema ya no re-renderiza las ~48 celdas.
+// memo: cambiar el tema no vuelve a calcular ni a renderizar la tabla.
 const Tabla = memo(function Tabla({ datos, onAbrirEnlaces }) {
+  const grilla = useMemo(() => armarGrilla(datos), [datos])
+
   return (
     <div className="sched-table-wrapper">
       <table className="sched-table">
@@ -319,10 +262,12 @@ const Tabla = memo(function Tabla({ datos, onAbrirEnlaces }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((fila, filaIdx) => (
+          {rows.map((fila, f) => (
             <tr key={fila.time}>
               <td className="sched-td-time">{fila.time}</td>
-              {fila.cells.map((celda, col) => celdaDe(celda, col, filaIdx, datos, onAbrirEnlaces))}
+              {grilla[f].map((celda, dia) =>
+                celda && <Celda key={dia} celda={celda} onAbrirEnlaces={onAbrirEnlaces} />
+              )}
             </tr>
           ))}
         </tbody>
@@ -336,29 +281,20 @@ function ModalEnlaces({ item, onClose }) {
 
   useEffect(() => {
     if (!item) return
-    const onKey = e => {
-      if (e.key === 'Escape') onClose()
-    }
+    const onKey = e => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [item, onClose])
 
   if (!item) return null
 
-  const handleCopiar = (url, idx) => {
+  const copiar = async (url, idx) => {
     try {
-      navigator.clipboard.writeText(url)
+      await navigator.clipboard.writeText(url)
       setCopiadoIdx(idx)
       setTimeout(() => setCopiadoIdx(null), 2000)
     } catch {
-      const input = document.createElement('input')
-      input.value = url
-      document.body.appendChild(input)
-      input.select()
-      document.execCommand('copy')
-      document.body.removeChild(input)
-      setCopiadoIdx(idx)
-      setTimeout(() => setCopiadoIdx(null), 2000)
+      /* sin permiso para el portapapeles: el enlace sigue visible para copiarlo a mano */
     }
   }
 
@@ -375,24 +311,17 @@ function ModalEnlaces({ item, onClose }) {
         <div className="sched-popup-body">
           {item.links.map((link, idx) => (
             <div key={idx} className="sched-popup-row">
-              <a
-                className="sched-popup-link-btn"
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a className="sched-popup-link-btn" href={link.url} target="_blank" rel="noopener noreferrer">
                 <span className="material-symbols-outlined">
                   {link.url.includes('zoom.us') ? 'videocam' : 'video_call'}
                 </span>
                 <span className="sched-popup-link-text">{link.etiqueta || 'Unirse'}</span>
-                <span className="material-symbols-outlined sched-popup-arrow">
-                  open_in_new
-                </span>
+                <span className="material-symbols-outlined sched-popup-arrow">open_in_new</span>
               </a>
 
               <button
                 className={cx('sched-popup-copy-btn', copiadoIdx === idx && 'is-copied')}
-                onClick={() => handleCopiar(link.url, idx)}
+                onClick={() => copiar(link.url, idx)}
                 title="Copiar enlace"
               >
                 <span className="material-symbols-outlined">
@@ -424,11 +353,7 @@ export default function App() {
     <div className="sched-page">
       <div className="sched-container">
         <div className="sched-top-bar">
-          <a
-            className="sched-back-btn"
-            href="https://ema28pro.github.io/"
-            title="Ir al portafolio principal"
-          >
+          <a className="sched-back-btn" href="https://ema28pro.github.io/" title="Ir al portafolio principal">
             <span className="material-symbols-outlined">arrow_back</span>
             Portafolio
           </a>
