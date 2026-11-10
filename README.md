@@ -29,18 +29,18 @@ npm run deploy
 
 La URL final será: **https://ema28pro.github.io/horario**
 
-## 🗓️ Sincronización con Google Calendar (Tutorías)
+## 🗓️ Sincronización con Google Calendar (Tutorías y Nivélate)
 
-El horario sincroniza automáticamente las **Tutorías** desde tu Google Calendar institucional (`emanuel.lopez@udea.edu.co`) siguiendo estas reglas automáticas:
-1. **Filtro de título**: Solo se incluyen eventos que comiencen con `Tutoría` o `Tutoria` (insensible a mayúsculas o tildes).
+El horario sincroniza automáticamente las **Tutorías** y eventos de **Nivélate** desde tu Google Calendar institucional (`emanuel.lopez@udea.edu.co`) siguiendo estas reglas automáticas:
+1. **Filtro de título**: Se incluyen eventos que contengan `Tutoría` o `Nivélate` (ej. `UdeA Nivélate con ATV - Lógica y Representación I`, insensible a mayúsculas o tildes).
 2. **Expiración diaria**: Al comenzar un nuevo día, los eventos de los días anteriores desaparecen automáticamente.
 3. **Semana en curso**: Solo se muestran los eventos comprendidos dentro de la semana actual (Lunes a Domingo).
-4. **Integración visual**: Se listan en el banner dinámico y se inyectan en los espacios libres del horario semanal.
+4. **Integración visual**: Se inyectan en los espacios correspondientes del horario semanal con enlaces a la reunión virtual y al evento de Google Calendar.
 
 ### ⚡ Pasos para conectar tu Google Calendar:
 
 1. Ve a [Google Apps Script](https://script.google.com/) y crea un **Nuevo proyecto**.
-2. Copia y pega el código que está en el archivo [`google-apps-script/Code.gs`](file:///google-apps-script/Code.gs).
+2. Copia y pega el código que está en el archivo [`code.gs`](file:///code.gs).
 3. Haz clic en el botón azul superior **Implementar (Deploy)** > **Nueva implementación**.
 4. Haz clic en el ícono de engranaje (Tipo) y selecciona **Aplicación web**.
 5. Configuración:

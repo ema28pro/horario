@@ -2,8 +2,8 @@
  * Horario UdeA - Google Apps Script (Aplicación web)
  *
  * GET .../exec[?token=CLAVE]
- *   Sin token válido: tutorías de la semana (título y hora), sin ningún enlace.
- *   Con token válido: además el Meet de cada tutoría y los enlaces de las materias.
+ *   Sin token válido: tutorías y eventos de la semana (título y hora), sin ningún enlace.
+ *   Con token válido: además el enlace de reunión (Meet/Zoom), enlace al evento de Google Calendar y los enlaces de las materias.
  *
  * Requisitos:
  *   - Servicio avanzado "Google Calendar API" agregado (Servicios > +).
@@ -51,7 +51,7 @@ function tokenValido(candidato) {
   return Boolean(secreto) && candidato === secreto;
 }
 
-/** Tutorías que empiezan por "Tutoría"/"Tutoria", desde ahora hasta el domingo a las 23:59. */
+/** Tutorías y eventos de nivelación ("Tutoría", "Nivélate", etc.), desde ahora hasta el domingo a las 23:59. */
 function leerTutorias() {
   const ahora = new Date();
   const diasHastaDomingo = (7 - ahora.getDay()) % 7;
@@ -67,11 +67,12 @@ function leerTutorias() {
   });
 
   return (respuesta.items || [])
-    .filter(ev => ev.start.dateTime && /^tutor[íi]a/i.test((ev.summary || '').trim()))
+    .filter(ev => ev.start.dateTime && /(?:tutor[íi]a|niv[eé]late)/i.test((ev.summary || '').trim()))
     .map(ev => ({
       titulo: ev.summary.trim(),
       inicio: ev.start.dateTime,
       fin: ev.end.dateTime,
-      link: ev.hangoutLink || null
+      link: ev.hangoutLink || null,
+      calendarLink: ev.htmlLink || null
     }));
 }

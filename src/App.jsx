@@ -104,9 +104,17 @@ function useDatosCalendar(token) {
           const clave = `${dia}:${inicio.getHours()}`
 
           if (!indice.has(clave)) {
+            const links = []
+            if (ev.link) {
+              links.push({ etiqueta: 'Google Meet', url: ev.link })
+            }
+            if (ev.calendarLink) {
+              links.push({ etiqueta: 'Google Calendar', url: ev.calendarLink })
+            }
+
             indice.set(clave, {
               titulo: ev.titulo,
-              links: ev.link ? [{ etiqueta: 'Google Meet', url: ev.link }] : [],
+              links,
             })
           }
         }
@@ -306,7 +314,11 @@ function ModalEnlaces({ item, onClose }) {
             <div key={idx} className="sched-popup-row">
               <a className="sched-popup-link-btn" href={link.url} target="_blank" rel="noopener noreferrer">
                 <span className="material-symbols-outlined">
-                  {link.url.includes('zoom.us') ? 'videocam' : 'video_call'}
+                  {link.url.includes('zoom.us')
+                    ? 'videocam'
+                    : link.url.includes('calendar')
+                    ? 'calendar_month'
+                    : 'video_call'}
                 </span>
                 <span className="sched-popup-link-text">{link.etiqueta || 'Unirse'}</span>
                 <span className="material-symbols-outlined sched-popup-arrow">open_in_new</span>
