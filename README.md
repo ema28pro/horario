@@ -49,3 +49,9 @@ El horario sincroniza automáticamente las **Tutorías** y eventos de **Nivélat
 6. Haz clic en **Implementar**, concede los permisos y copia la URL proporcionada (`https://script.google.com/macros/s/.../exec`).
 7. En la web de Horario, haz clic en el botón superior **Google Calendar**, pega la URL y haz clic en **Guardar y Conectar**.
 
+
+### Pendientes
+- Volverlo una integracion de Google
+- Cargar el horario desde fuentes
+- Interfaz y ususarios
+- Enlaces

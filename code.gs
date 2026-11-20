@@ -51,16 +51,20 @@ function tokenValido(candidato) {
   return Boolean(secreto) && candidato === secreto;
 }
 
-/** Tutorías y eventos de nivelación ("Tutoría", "Nivélate", etc.), desde ahora hasta el domingo a las 23:59. */
+/**
+ * Tutorías y eventos de nivelación ("Tutoría", "Nivélate", etc.) de la semana en curso.
+ * Se incluyen los eventos que ya pasaron hoy: solo dejan de aparecer al empezar un día nuevo.
+ */
 function leerTutorias() {
-  const ahora = new Date();
-  const diasHastaDomingo = (7 - ahora.getDay()) % 7;
+  const hoy = new Date();
+  const desde = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), 0, 0, 0);
+  const diasHastaDomingo = (7 - hoy.getDay()) % 7;
   const hasta = new Date(
-    ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + diasHastaDomingo, 23, 59, 59
+    hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + diasHastaDomingo, 23, 59, 59
   );
 
   const respuesta = Calendar.Events.list(CALENDAR_ID, {
-    timeMin: ahora.toISOString(),
+    timeMin: desde.toISOString(),
     timeMax: hasta.toISOString(),
     singleEvents: true,
     orderBy: 'startTime'
